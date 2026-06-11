@@ -1,0 +1,60 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/backend/**'
+      - 'packages/shared/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/backend/**'
+      - 'packages/shared/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: mags
+          POSTGRES_PASSWORD: password123
+          POSTGRES_DB: mags_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @mags/backend exec prisma generate
+
+      - name: Lint
+        run: pnpm --filter @mags/backend lint
+
+      - name: Run tests
+        run: pnpm --filter @mags/backend test
+        env:
+          DATABASE_URL: postgresql://mags:password123@localhost:5432/mags_db
+
+      - name: Build
+        run: pnpm --filter @mags/backend build

@@ -1,0 +1,30 @@
+{
+  "name": "mags-ai-studio",
+  "version": "1.0.0",
+  "description": "AI SaaS platform like Cursor / Claude / OpenAI assistant",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "clean": "turbo run clean && rimraf node_modules",
+    "backend:dev": "pnpm --filter @mags/backend start:dev",
+    "frontend:dev": "pnpm --filter @mags/frontend dev",
+    "db:push": "pnpm --filter @mags/backend exec prisma db push",
+    "db:studio": "pnpm --filter @mags/backend exec prisma studio"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "turbo": "^1.12.4",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.15.4"
+}
