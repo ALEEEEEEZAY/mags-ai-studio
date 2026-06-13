@@ -45,8 +45,8 @@ export class AIService {
   /**
    * Stream completion response
    */
-  async streamCompletion(options: CompletionOptions): AsyncIterable<AIStreamToken> {
-    return this.provider.streamCompletion(options);
+  async *streamCompletion(options: CompletionOptions): AsyncGenerator<AIStreamToken> {
+    yield* this.provider.streamCompletion(options);
   }
 
   /**

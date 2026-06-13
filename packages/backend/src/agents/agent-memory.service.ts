@@ -1,7 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
-import { IAgentMemory, MemoryEntry } from './interfaces/memory.interface';
+
+interface IAgentMemory {
+  id: string;
+  userId: string;
+  agentId: string;
+  type: string;
+  content: string;
+  relevance: number;
+  createdAt: Date;
+}
+
+interface MemoryEntry {
+  id: string;
+  content: string;
+  relevance: number;
+  timestamp: Date;
+}
 
 @Injectable()
 export class AgentMemoryService {
@@ -40,7 +56,6 @@ export class AgentMemoryService {
       const entries = Array.isArray(cached) ? cached : [];
       entries.push(memory);
 
-      // Keep only last 20 entries
       if (entries.length > 20) {
         entries.shift();
       }
@@ -75,7 +90,6 @@ export class AgentMemoryService {
   private async getShortTermMemory(agentId: string, userId: string): Promise<MemoryEntry[]> {
     const cacheKey = `memory:${agentId}:short_term`;
 
-    // Try cache first
     const cached = await this.redisService.getJSON(cacheKey);
     if (cached) {
       return cached.map((m: any) => ({
@@ -86,7 +100,6 @@ export class AgentMemoryService {
       }));
     }
 
-    // Fetch from DB
     const memories = await this.prisma.agentMemory.findMany({
       where: {
         agentId,

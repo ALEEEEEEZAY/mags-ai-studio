@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { User, UserRole } from '@prisma/client';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Injectable()
@@ -27,7 +28,7 @@ export class AdminService {
     ]);
 
     return {
-      data: users.map((user) => this.buildUserResponse(user)),
+      data: users.map((user: any) => this.buildUserResponse(user)),
       total,
       skip,
       take,
@@ -136,7 +137,7 @@ export class AdminService {
       include: { role: true },
     });
 
-    if (userRoles.some((ur) => ur.role.name === 'SUPER_ADMIN')) {
+    if (userRoles.some((ur: any) => ur.role.name === 'SUPER_ADMIN')) {
       throw new ForbiddenException('Cannot deactivate SUPER_ADMIN users');
     }
 
@@ -150,9 +151,7 @@ export class AdminService {
       data: {
         userId: adminId,
         action: 'DEACTIVATE_USER',
-        resourceType: 'USER',
-        resourceId: userId,
-        status: 'SUCCESS',
+        resource: 'USER',
       },
     });
 
@@ -181,9 +180,7 @@ export class AdminService {
       data: {
         userId: adminId,
         action: 'ACTIVATE_USER',
-        resourceType: 'USER',
-        resourceId: userId,
-        status: 'SUCCESS',
+        resource: 'USER',
       },
     });
 
@@ -218,10 +215,10 @@ export class AdminService {
    * Build user response
    */
   private buildUserResponse(user: any) {
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const roles = user.userRoles.map((ur: any) => ur.role.name);
     const permissions = user.userRoles
-      .flatMap((ur) => ur.role.permissions)
-      .map((rp) => rp.permission.name);
+      .flatMap((ur: any) => ur.role.permissions)
+      .map((rp: any) => rp.permission.name);
 
     return {
       id: user.id,
