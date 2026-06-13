@@ -5,7 +5,7 @@ import { TaskExecutionContext } from '../interfaces/task.interface';
 
 @Injectable()
 export class CodingAgent extends BaseAgent {
-  constructor(private aiService: AIService) {
+  constructor(protected aiService: AIService) {
     super();
   }
 
