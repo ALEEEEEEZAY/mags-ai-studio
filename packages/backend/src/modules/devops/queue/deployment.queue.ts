@@ -1,24 +1,56 @@
 import { Injectable } from '@nestjs/common';
 import { Queue, Worker } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { PrismaService } from '@/database/prisma.service';
+import { PipelineExecutorService } from '../pipelines/pipeline-executor.service';
 
 @Injectable()
 export class DeploymentQueue {
-  private queue: Queue;
+  constructor(
+    @InjectQueue('deployments') private deploymentQueue: Queue,
+    private prisma: PrismaService,
+    private pipelineExecutor: PipelineExecutorService,
+  ) {
+    this.setupWorker();
+  }
 
-  constructor() {
-    this.queue = new Queue('deployments', {
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
+  async addDeploymentJob(data: any, opts?: any): Promise<void> {
+    await this.deploymentQueue.add('deploy', data, opts);
+  }
+
+  async addRollbackJob(data: any, opts?: any): Promise<void> {
+    await this.deploymentQueue.add('rollback', data, opts);
+  }
+
+  private setupWorker(): void {
+    const worker = new Worker(
+      'deployments',
+      async (job) => {
+        if (job.name === 'deploy') {
+          return this.processDeployment(job.data);
+        } else if (job.name === 'rollback') {
+          return this.processRollback(job.data);
+        }
       },
+      { connection: { host: process.env.REDIS_HOST || 'localhost', port: 6379 } },
+    );
+
+    worker.on('completed', (job) => {
+      console.log(`Job ${job.id} completed`);
+    });
+
+    worker.on('failed', (job, err) => {
+      console.error(`Job ${job?.id} failed:`, err);
     });
   }
 
-  async addDeploymentJob(data: any, options?: any): Promise<void> {
-    await this.queue.add('deploy', data, options);
+  private async processDeployment(data: any): Promise<void> {
+    const { deploymentId } = data;
+    await this.pipelineExecutor.executePipeline(deploymentId);
   }
 
-  async addRollbackJob(data: any, options?: any): Promise<void> {
-    await this.queue.add('rollback', data, options);
+  private async processRollback(data: any): Promise<void> {
+    const { deploymentId, previousDeploymentId } = data;
+    // Implement rollback logic
   }
 }
